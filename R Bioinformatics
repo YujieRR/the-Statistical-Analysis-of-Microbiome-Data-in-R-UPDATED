@@ -326,3 +326,35 @@ plot(cal)
 ##Output pred. probs
 head(predict(pen_m1, type ="fitted"))
 
+
+
+#Prompts
+##2. 
+install.packages("randomForest")
+library(randomForest)
+otu_table <- as.data.frame(phyloseq::otu_table(ps_rare)) #extract OTU table from ps_rare
+otu_table <- t(otu_table) #transpose the OTU table
+sample_data_1 <- data.frame(phyloseq::sample_data(ps_rare))
+sample_data_1$Status <- as.factor(sample_data_1$Status)
+rf_model_1 <- randomForest(x = otu_table, y = sample_data_1$Status, ntree = 1000)
+important_otu <- rownames(otu_table)[which.max(rf_model_1$importance[, 1])]
+taxonomic_table_1 <- data.frame(tax_table(ps_rare))
+important_taxa <- taxonomic_table_1[important_otu, ]
+## the greatest important OTU: ERR1331862, Bag Error Rate is 0.2738095.
+
+##3.
+summarize_alpha_diversity <- function(physeq_obj) {
+adiv_object <- data.frame(
+  "Observed" = phyloseq::estimate_richness(physeq_obj, measures = "Observed"),
+  "Shannon" = phyloseq::estimate_richness(physeq_obj, measures = "Shannon"),
+  "PD" = picante::pd(samp = data.frame(t(data.frame(phyloseq::otu_table(physeq_obj)))), 
+                     tree = phyloseq::phy_tree(physeq_obj))[, 1],
+  "Status" = phyloseq::sample_data(physeq_obj)$Status
+)
+print(summary(adiv_object))
+return(adiv_object)
+}
+physeq_result <- summarize_alpha_diversity(physeq_obj)
+
+
+
